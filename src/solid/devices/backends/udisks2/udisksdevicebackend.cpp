@@ -10,7 +10,7 @@
 #include "udisks_debug.h"
 
 #include <QDBusConnection>
-#include <QDomDocument>
+#include <QXmlStreamReader>
 
 #include "solid/deviceinterface.h"
 #include "solid/genericinterface.h"
@@ -45,34 +45,27 @@ DeviceBackend::DeviceBackend(const QString &udi)
     : m_udi(udi)
 {
     // qDebug() << "Creating backend for device" << m_udi;
-    m_device = new QDBusInterface(UD2_DBUS_SERVICE,
-                                  m_udi,
-                                  QString(), // no interface, we aggregate them
-                                  QDBusConnection::systemBus(),
-                                  this);
 
-    if (m_device->isValid()) {
-        QDBusConnection::systemBus().connect(UD2_DBUS_SERVICE, //
-                                             m_udi,
-                                             DBUS_INTERFACE_PROPS,
-                                             "PropertiesChanged",
-                                             this,
-                                             SLOT(slotPropertiesChanged(QString, QVariantMap, QStringList)));
-        QDBusConnection::systemBus().connect(UD2_DBUS_SERVICE,
-                                             UD2_DBUS_PATH,
-                                             DBUS_INTERFACE_MANAGER,
-                                             "InterfacesAdded",
-                                             this,
-                                             SLOT(slotInterfacesAdded(QDBusObjectPath, VariantMapMap)));
-        QDBusConnection::systemBus().connect(UD2_DBUS_SERVICE,
-                                             UD2_DBUS_PATH,
-                                             DBUS_INTERFACE_MANAGER,
-                                             "InterfacesRemoved",
-                                             this,
-                                             SLOT(slotInterfacesRemoved(QDBusObjectPath, QStringList)));
+    QDBusConnection::systemBus().connect(UD2_DBUS_SERVICE, //
+                                         m_udi,
+                                         DBUS_INTERFACE_PROPS,
+                                         "PropertiesChanged",
+                                         this,
+                                         SLOT(slotPropertiesChanged(QString, QVariantMap, QStringList)));
+    QDBusConnection::systemBus().connect(UD2_DBUS_SERVICE,
+                                         UD2_DBUS_PATH,
+                                         DBUS_INTERFACE_MANAGER,
+                                         "InterfacesAdded",
+                                         this,
+                                         SLOT(slotInterfacesAdded(QDBusObjectPath, VariantMapMap)));
+    QDBusConnection::systemBus().connect(UD2_DBUS_SERVICE,
+                                         UD2_DBUS_PATH,
+                                         DBUS_INTERFACE_MANAGER,
+                                         "InterfacesRemoved",
+                                         this,
+                                         SLOT(slotInterfacesRemoved(QDBusObjectPath, QStringList)));
 
-        initInterfaces();
-    }
+    initInterfaces();
 }
 
 DeviceBackend::~DeviceBackend()
@@ -90,16 +83,16 @@ void DeviceBackend::initInterfaces()
         return;
     }
 
-    QDomDocument dom;
-    dom.setContent(xmlData);
-
-    QDomNodeList ifaceNodeList = dom.elementsByTagName("interface");
-    for (int i = 0; i < ifaceNodeList.count(); i++) {
-        QDomElement ifaceElem = ifaceNodeList.item(i).toElement();
-        /* Accept only org.freedesktop.UDisks2.* interfaces so that when the device is unplugged,
-         * m_interfaces goes empty and we can easily verify that the device is gone. */
-        if (!ifaceElem.isNull() && ifaceElem.attribute("name").startsWith(UD2_DBUS_SERVICE)) {
-            m_interfaces.append(ifaceElem.attribute("name"));
+    QXmlStreamReader xml(xmlData);
+    while (!xml.atEnd() && !xml.hasError()) {
+        xml.readNext();
+        if (xml.isStartElement() && xml.name() == QLatin1String("interface")) {
+            const auto name = xml.attributes().value(QLatin1String("name")).toString();
+            /* Accept only org.freedesktop.UDisks2.* interfaces so that when the device is unplugged,
+             * m_interfaces goes empty and we can easily verify that the device is gone. */
+            if (name.startsWith(UD2_DBUS_SERVICE)) {
+                m_interfaces.append(name);
+            }
         }
     }
 
@@ -148,7 +141,7 @@ QVariantMap DeviceBackend::allProperties() const
                 m_propertyCache.insert(it.key(), it.value());
             }
         } else {
-            qCWarning(UDISKS2) << "Error getting props:" << reply.error().name() << reply.error().message();
+            qCWarning(UDISKS2) << "Error getting props:" << reply.error().name() << reply.error().message() << "for" << m_udi;
         }
         // qDebug() << "After iface" << iface << ", cache now contains" << m_propertyCache.size() << "items";
     }

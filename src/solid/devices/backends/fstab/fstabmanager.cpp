@@ -17,11 +17,10 @@ using namespace Solid::Backends::Shared;
 
 FstabManager::FstabManager(QObject *parent)
     : Solid::Ifaces::DeviceManager(parent)
+    , m_deviceList(FstabHandling::deviceList())
 {
     m_supportedInterfaces << Solid::DeviceInterface::StorageAccess;
     m_supportedInterfaces << Solid::DeviceInterface::NetworkShare;
-
-    m_deviceList = FstabHandling::deviceList();
 
     connect(FstabWatcher::instance(), &FstabWatcher::fstabChanged, this, &FstabManager::onFstabChanged);
     connect(FstabWatcher::instance(), &FstabWatcher::mtabChanged, this, &FstabManager::onMtabChanged);
@@ -111,7 +110,7 @@ void FstabManager::_k_updateDeviceList()
 
     m_deviceList = deviceList;
 
-    qCDebug(FSTAB) << oldlist << "->" << newlist;
+    qCDebug(FSTAB_LOG) << oldlist << "->" << newlist;
 
     for (const QString &device : newlist) {
         if (!oldlist.contains(device)) {

@@ -155,6 +155,11 @@ bool StorageAccess::isIgnored() const
         return true;
     }
 
+    const QStringList mountOptions = m_device->prop("UserspaceMountOptions").toStringList();
+    if (mountOptions.contains(QLatin1String("x-gdu.hide"))) {
+        return true;
+    }
+
     const QString path = filePath();
 
     const bool inUserPath = (path.startsWith(QLatin1String("/media/")) //
@@ -355,9 +360,8 @@ QString StorageAccess::generateReturnObjectPath()
 
 QString StorageAccess::clearTextPath() const
 {
-    const QString prefix = "/org/freedesktop/UDisks2/block_devices";
     QDBusMessage call = QDBusMessage::createMethodCall(UD2_DBUS_SERVICE, //
-                                                       prefix,
+                                                       UD2_DBUS_PATH_BLOCKDEVICES,
                                                        DBUS_INTERFACE_INTROSPECT,
                                                        "Introspect");
     QDBusPendingReply<QString> reply = QDBusConnection::systemBus().asyncCall(call);
@@ -370,7 +374,7 @@ QString StorageAccess::clearTextPath() const
         for (int i = 0; i < nodeList.count(); i++) {
             QDomElement nodeElem = nodeList.item(i).toElement();
             if (!nodeElem.isNull() && nodeElem.hasAttribute("name")) {
-                const QString udi = prefix + "/" + nodeElem.attribute("name");
+                const QString udi = UD2_DBUS_PATH_BLOCKDEVICES + QLatin1Char('/') + nodeElem.attribute("name");
                 Device holderDevice(udi);
 
                 if (m_device->udi() == holderDevice.prop("CryptoBackingDevice").value<QDBusObjectPath>().path()) {

@@ -116,8 +116,8 @@ QStringList Manager::allDevices()
 {
     m_deviceCache.clear();
 
-    introspect("/org/freedesktop/UDisks2/block_devices", true /*checkOptical*/);
-    introspect("/org/freedesktop/UDisks2/drives");
+    introspect(UD2_DBUS_PATH_BLOCKDEVICES, true /*checkOptical*/);
+    introspect(UD2_DBUS_PATH_DRIVES);
 
     return m_deviceCache;
 }
@@ -134,9 +134,11 @@ void Manager::introspect(const QString &path, bool checkOptical)
         for (int i = 0; i < nodeList.count(); i++) {
             QDomElement nodeElem = nodeList.item(i).toElement();
             if (!nodeElem.isNull() && nodeElem.hasAttribute("name")) {
-                const QString udi = path + "/" + nodeElem.attribute("name");
+                const QString name = nodeElem.attribute("name");
+                const QString udi = path + "/" + name;
 
-                if (checkOptical) {
+                // Optimization, a loop device cannot really have a physical drive associated with it
+                if (checkOptical && !name.startsWith(QLatin1String("loop"))) {
                     Device device(udi);
                     if (device.mightBeOpticalDisc()) {
                         QDBusConnection::systemBus().connect(UD2_DBUS_SERVICE, //

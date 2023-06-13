@@ -19,6 +19,8 @@ class Device;
 class NetworkSharePrivate;
 
 /**
+ * @class Solid::NetworkShare networkshare.h <Solid/NetworkShare>
+ *
  * NetworkShare interface.
  *
  * a NetworkShare interface is used to determine the type of
@@ -56,9 +58,10 @@ public:
      * - Unknown : a unsupported network protocol
      * - Nfs : nfs protocol
      * - Cifs : samba protocol
+     * - Smb3 : samba protocol (version 3)
      */
 
-    enum ShareType { Unknown, Nfs, Cifs };
+    enum ShareType { Unknown, Nfs, Cifs, Smb3 };
     Q_ENUM(ShareType)
 
     /**
