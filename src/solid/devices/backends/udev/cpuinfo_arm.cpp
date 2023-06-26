@@ -118,6 +118,7 @@ static const struct ArmIdPart qcomParts[] = {
     {0x211, "Kryo"},
     {0x800, "Falkor V1/Kryo 2xx Gold"},
     {0x801, "Kryo 2xx Silver"},
+    {0x802, "Kryo 3xx Gold"},
     {0x803, "Kryo 3xx Silver"},
     {0x804, "Kryo 4xx Gold"},
     {0x805, "Kryo 4xx/5xx Silver"},
@@ -189,8 +190,18 @@ static const struct ArmIdPart hisiParts[] = {
 };
 
 static const struct ArmIdPart appleParts[] = {
-    {0x022, "M1 Icestorm"},
-    {0x023, "M1 Firestorm"},
+    {0x020, "Icestorm (A14)"},
+    {0x021, "Firestorm (A14)"},
+    {0x022, "Icestorm (M1)"},
+    {0x023, "Firestorm (M1)"},
+    {0x024, "Icestorm (M1 Pro)"},
+    {0x025, "Firestorm (M1 Pro)"},
+    {0x028, "Icestorm (M1 Max)"},
+    {0x029, "Firestorm (M1 Max)"},
+    {0x030, "Blizzard (A15)"},
+    {0x031, "Avalanche (A15)"},
+    {0x032, "Blizzard (M2)"},
+    {0x033, "Avalanche (M2)"},
     {-1, "unknown"},
 };
 
